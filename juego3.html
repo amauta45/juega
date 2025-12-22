@@ -16,7 +16,7 @@ body {
   overflow: hidden;
 }
 
-/* Fondo */
+/* CONTENEDOR */
 .game {
   position: relative;
   width: 100vw;
@@ -24,41 +24,43 @@ body {
   background: url("https://i.pinimg.com/736x/70/6c/b0/706cb09844b2feef811a9fc584bf3719.jpg") center/cover no-repeat;
 }
 
-/* Nave */
+/* JUGADOR */
 .player {
   position: absolute;
-  bottom: 20px;
-  left: 50%;
-  width: 60px;
-  height: 60px;
-  transform: translateX(-50%);
+  bottom: 5vh;
+  width: 12vw;
+  max-width: 60px;
+  min-width: 40px;
+  aspect-ratio: 1;
   background: url("https://i.gifer.com/origin/d6/d66ffd1987d422d9b3db13cebcb87947_w200.gif") center/contain no-repeat;
 }
 
-/* Corazones */
-.heart {
+/* OBJETOS */
+.heart, .rock {
   position: absolute;
-  width: 40px;
-  height: 40px;
+  width: 8vw;
+  max-width: 45px;
+  min-width: 30px;
+  aspect-ratio: 1;
+}
+
+.heart {
   background: url("https://cdn-icons-png.flaticon.com/512/833/833472.png") center/contain no-repeat;
 }
 
-/* Piedras */
 .rock {
-  position: absolute;
-  width: 45px;
-  height: 45px;
   background: url("https://png.pngtree.com/png-clipart/20210108/ourmid/pngtree-monochrome-rock-clip-art-png-image_2689540.jpg") center/contain no-repeat;
 }
 
-/* Barra GRANDE */
+/* BARRA */
 .bar {
   position: absolute;
-  top: 15px;
+  top: 2vh;
   left: 50%;
   transform: translateX(-50%);
-  width: 320px;          /* ⬅ MÁS GRANDE */
-  height: 26px;          /* ⬅ MÁS ALTA */
+  width: 80vw;
+  max-width: 320px;
+  height: 26px;
   border: 3px solid white;
   border-radius: 15px;
   background: rgba(0,0,0,0.4);
@@ -86,41 +88,53 @@ const game = document.getElementById("game");
 const player = document.getElementById("player");
 const fill = document.getElementById("fill");
 
-let playerX = window.innerWidth / 2;
 let progress = 0;
-let speed = 5;
+let speed = 4;
 let gameOver = false;
 
-/* Movimiento PC */
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowLeft") playerX -= 30;
-  if (e.key === "ArrowRight") playerX += 30;
-  movePlayer();
-});
+/* POSICIÓN INICIAL */
+function centerPlayer() {
+  player.style.left = (game.clientWidth / 2 - player.offsetWidth / 2) + "px";
+}
+centerPlayer();
+window.addEventListener("resize", centerPlayer);
 
-/* Movimiento celular */
-game.addEventListener("touchmove", e => {
-  playerX = e.touches[0].clientX;
-  movePlayer();
-});
-
-function movePlayer() {
-  playerX = Math.max(0, Math.min(window.innerWidth - 60, playerX));
-  player.style.left = playerX + "px";
+/* MOVER JUGADOR */
+function movePlayer(x) {
+  const maxX = game.clientWidth - player.offsetWidth;
+  x = Math.max(0, Math.min(maxX, x));
+  player.style.left = x + "px";
 }
 
-/* Crear objetos */
+/* PC */
+document.addEventListener("keydown", e => {
+  let x = player.offsetLeft;
+  if (e.key === "ArrowLeft") movePlayer(x - 30);
+  if (e.key === "ArrowRight") movePlayer(x + 30);
+});
+
+/* CELULAR */
+game.addEventListener("touchmove", e => {
+  movePlayer(e.touches[0].clientX - player.offsetWidth / 2);
+});
+
+/* CREAR OBJETOS */
 function spawn(type) {
   const el = document.createElement("div");
   el.className = type;
-  el.style.left = Math.random() * (window.innerWidth - 50) + "px";
+
+  const size = Math.random() * 10 + 30;
+  el.style.width = size + "px";
+  el.style.height = size + "px";
+
+  el.style.left = Math.random() * (game.clientWidth - size) + "px";
   el.style.top = "-50px";
   game.appendChild(el);
 
   let fall = setInterval(() => {
     if (gameOver) {
-      clearInterval(fall);
       el.remove();
+      clearInterval(fall);
       return;
     }
 
@@ -136,43 +150,39 @@ function spawn(type) {
       p.bottom > o.top
     ) {
       if (type === "heart") {
-        progress += 5;          // ⬅ MÁS CORAZONES NECESARIOS
+        progress += 5;
         fill.style.width = progress + "%";
         el.remove();
         clearInterval(fall);
-
         if (progress >= 100) win();
       } else {
         lose();
       }
     }
 
-    if (el.offsetTop > window.innerHeight) {
+    if (el.offsetTop > game.clientHeight) {
       el.remove();
       clearInterval(fall);
     }
   }, 20);
 }
 
-/* Generadores */
-setInterval(() => spawn("heart"), 850);
-setInterval(() => spawn("rock"), 650);
+/* GENERADORES */
+setInterval(() => spawn("heart"), 900);
+setInterval(() => spawn("rock"), 700);
 
-/* Perder */
+/* PERDER */
 function lose() {
   gameOver = true;
-  alert("💔 Tocaste una piedra. Inténtalo otra vez");
+  alert("💔 Tocaste una piedra");
   location.reload();
 }
 
-/* Ganar */
+/* GANAR */
 function win() {
   gameOver = true;
-
-  // 🔓 DESBLOQUEAR JUEGO 4
   localStorage.setItem("juego4", "desbloqueado");
-
-  alert("❤️ ¡Nivel completado! Juego 4 desbloqueado");
+  alert("❤️ Nivel completado");
   location.href = "mapa.html";
 }
 </script>
