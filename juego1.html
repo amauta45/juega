@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego 1 - Rompecabezas</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #b30000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+.container {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  padding: 10px;
+}
+
+h1 {
+  margin-bottom: 10px;
+}
+
+#timer {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  display: none;
+}
+
+/* Selector de imágenes */
+.preview {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.preview img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  cursor: pointer;
+}
+
+.preview img.selected {
+  border-color: yellow;
+}
+
+/* Tablero */
+.board {
+  width: 300px;
+  height: 300px;
+  margin: 10px auto;
+  display: none;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 3px;
+  background: white;
+  padding: 3px;
+  border-radius: 10px;
+}
+
+.cell {
+  background: #eee;
+  border-radius: 6px;
+}
+
+/* Piezas */
+.pieces {
+  width: 300px;
+  margin: 10px auto;
+  display: none;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.piece {
+  width: 96px;
+  height: 96px;
+  border-radius: 6px;
+  cursor: grab;
+  background-size: 300px 300px;
+}
+
+/* Botones */
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+/* Éxito */
+.success {
+  display: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>🧩 Elige tu rompecabezas</h1>
+
+  <!-- Selección de imágenes -->
+  <div class="preview" id="preview">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeXE52b-h5WItJimoqoUcTrqMdZ7bfJELhxkrd6jSN1w&s" onclick="selectImage(this)">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_zDbG5UNVz8OgRTsX85zy4uDoT-o8AFDZ5A&s" onclick="selectImage(this)">
+    <img src="https://wallpapers.com/images/hd/bts-chibi-pile-m10g2dljpk050xse.jpg" onclick="selectImage(this)">
+  </div>
+
+  <button onclick="startGame()">Empezar juego</button>
+
+  <div id="timer">Tiempo: 60</div>
+
+  <!-- Tablero -->
+  <div class="board" id="board"></div>
+
+  <!-- Piezas -->
+  <div class="pieces" id="pieces"></div>
+
+  <!-- Éxito -->
+  <div class="success" id="success">
+    <h2>🎉 ¡Rompecabezas completado!</h2>
+    <button onclick="location.href='mapa.html'">Volver al mapa</button>
+  </div>
+</div>
+
+<script>
+let selectedImage = "";
+let correct = 0;
+let time = 60;
+let timer;
+
+/* Seleccionar imagen */
+function selectImage(img) {
+  document.querySelectorAll(".preview img").forEach(i => i.classList.remove("selected"));
+  img.classList.add("selected");
+  selectedImage = img.src;
+}
+
+/* Iniciar juego */
+function startGame() {
+  if (!selectedImage) {
+    alert("Selecciona una imagen primero");
+    return;
+  }
+
+  document.querySelector(".preview").style.display = "none";
+  document.querySelector("button").style.display = "none";
+
+  document.getElementById("timer").style.display = "block";
+  document.getElementById("board").style.display = "grid";
+  document.getElementById("pieces").style.display = "grid";
+
+  createBoard();
+  createPieces();
+  startTimer();
+}
+
+/* Crear tablero */
+function createBoard() {
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+  correct = 0;
+
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.dataset.index = i;
+    cell.addEventListener("dragover", e => e.preventDefault());
+    cell.addEventListener("drop", drop);
+    board.appendChild(cell);
+  }
+}
+
+/* Crear piezas */
+function createPieces() {
+  const piecesContainer = document.getElementById("pieces");
+  piecesContainer.innerHTML = "";
+  let pieces = [];
+
+  for (let i = 0; i < 9; i++) {
+    const piece = document.createElement("div");
+    piece.className = "piece";
+    piece.draggable = true;
+    piece.dataset.index = i;
+    piece.style.backgroundImage = `url(${selectedImage})`;
+
+    const x = (i % 3) * -100;
+    const y = Math.floor(i / 3) * -100;
+    piece.style.backgroundPosition = `${x}px ${y}px`;
+
+    piece.addEventListener("dragstart", drag);
+    pieces.push(piece);
+  }
+
+  pieces.sort(() => Math.random() - 0.5);
+  pieces.forEach(p => piecesContainer.appendChild(p));
+}
+
+function drag(e) {
+  e.dataTransfer.setData("index", e.target.dataset.index);
+}
+
+function drop(e) {
+  const pieceIndex = e.dataTransfer.getData("index");
+  if (pieceIndex === e.target.dataset.index && e.target.children.length === 0) {
+    const piece = document.querySelector(`.piece[data-index="${pieceIndex}"]`);
+    e.target.appendChild(piece);
+    piece.draggable = false;
+    piece.style.width = "100%";
+    piece.style.height = "100%";
+    correct++;
+
+    if (correct === 9) win();
+  }
+}
+
+/* Temporizador */
+function startTimer() {
+  timer = setInterval(() => {
+    time--;
+    document.getElementById("timer").textContent = "Tiempo: " + time;
+
+    if (time <= 0) {
+      clearInterval(timer);
+      alert("⏰ Tiempo agotado. El juego se reiniciará");
+      location.reload();
+    }
+  }, 1000);
+}
+
+function win() {
+  clearInterval(timer);
+  document.getElementById("board").style.display = "none";
+  document.getElementById("pieces").style.display = "none";
+  document.getElementById("timer").style.display = "none";
+  document.getElementById("success").style.display = "block";
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego Final</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+/* ESCENARIO */
+.game {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: url("https://i.pinimg.com/1200x/0c/8a/01/0c8a01297970f5d6efb7cbb5b280d246.jpg") center/cover no-repeat;
+}
+
+/* BARRA DE PROGRESO */
+.progress {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 340px;
+  height: 22px;
+  border: 2px solid white;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.4);
+  z-index: 10;
+}
+
+.fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(to right, pink, hotpink);
+  border-radius: 10px;
+  transition: width 0.2s;
+}
+
+/* SUELO */
+.ground {
+  position: absolute;
+  bottom: 80px;
+  width: 100%;
+  height: 10px;
+  background: rgba(0,0,0,0.6);
+}
+
+/* PERSONAJE */
+.player {
+  position: absolute;
+  bottom: 90px;
+  left: 80px;
+  width: 60px;
+  height: 60px;
+  background: url("https://cdna.artstation.com/p/assets/images/images/047/256/128/original/benjamin-parga-oso-3-4-45ms.gif?1647163873") center/contain no-repeat;
+}
+
+/* OBSTÁCULOS */
+.obstacle {
+  position: absolute;
+  bottom: 80px;
+  width: 40px;
+  height: 60px;
+  background: url("https://mcgamba.hotglue.me/?Page4.head.155907191411") center/contain no-repeat;
+}
+
+/* META */
+.goal {
+  position: absolute;
+  bottom: 80px;
+  right: -15000px; /* ⏱️ ~5 MINUTOS */
+  width: 90px;
+  height: 90px;
+  background: url("https://cdn-icons-png.flaticon.com/512/854/854878.png") center/contain no-repeat;
+}
+</style>
+</head>
+
+<body>
+
+<div class="game" id="game">
+  <div class="progress"><div class="fill" id="fill"></div></div>
+  <div class="ground"></div>
+  <div class="player" id="player"></div>
+  <div class="goal" id="goal"></div>
+</div>
+
+<script>
+const player = document.getElementById("player");
+const goal = document.getElementById("goal");
+const fill = document.getElementById("fill");
+const game = document.getElementById("game");
+
+let y = 0, velocity = 0, gravity = 1.2, jumping = false;
+let speed = 5;               // velocidad equilibrada
+let obstacles = [];
+let finished = false;
+
+/* DISTANCIA (5 MIN APROX) */
+let distance = 0;
+const maxDistance = 15000;
+
+/* SALTAR */
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") jump();
+});
+document.addEventListener("touchstart", jump);
+
+function jump() {
+  if (!jumping) {
+    velocity = 18;
+    jumping = true;
+  }
+}
+
+/* OBSTÁCULOS */
+setInterval(() => {
+  if (finished) return;
+  const obs = document.createElement("div");
+  obs.className = "obstacle";
+  obs.style.left = "100%";
+  game.appendChild(obs);
+  obstacles.push(obs);
+}, 1300);
+
+/* LOOP */
+function update() {
+  if (finished) return;
+
+  /* SALTO */
+  y += velocity;
+  velocity -= gravity;
+  if (y <= 0) {
+    y = 0;
+    jumping = false;
+  }
+  player.style.bottom = 90 + y + "px";
+
+  /* DISTANCIA */
+  distance += speed;
+  fill.style.width = Math.min((distance / maxDistance) * 100, 100) + "%";
+
+  /* OBSTÁCULOS */
+  obstacles.forEach((obs, i) => {
+    obs.style.left = obs.offsetLeft - speed + "px";
+
+    if (obs.offsetLeft < -60) {
+      obs.remove();
+      obstacles.splice(i, 1);
+    }
+
+    if (collision(player, obs)) resetGame();
+  });
+
+  /* META */
+  if (collision(player, goal)) win();
+
+  requestAnimationFrame(update);
+}
+
+update();
+
+/* COLISIÓN */
+function collision(a, b) {
+  const r1 = a.getBoundingClientRect();
+  const r2 = b.getBoundingClientRect();
+  return (
+    r1.left < r2.right &&
+    r1.right > r2.left &&
+    r1.top < r2.bottom &&
+    r1.bottom > r2.top
+  );
+}
+
+/* REINICIAR */
+function resetGame() {
+  alert("💥 Fallaste… vuelves al inicio");
+  distance = 0;
+  fill.style.width = "0%";
+  obstacles.forEach(o => o.remove());
+  obstacles = [];
+}
+
+/* GANAR */
+function win() {
+  finished = true;
+  alert("🎉 ¡LO LOGRASTE! Ahora recibirás tu recompensa 💖");
+  location.href = "carta.html";
+}
+</script>
+
+</body>
+</html>

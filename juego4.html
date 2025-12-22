@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego 4 - Laberinto</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Área visible */
+.game {
+  width: 360px;
+  height: 600px;
+  overflow: hidden;
+  border: 4px solid gold;
+  background: url("https://i.imgur.com/9KQZ4JX.jpg") center/cover no-repeat;
+  position: relative;
+}
+
+/* Laberinto largo */
+.maze {
+  position: absolute;
+  width: 360px;
+  height: 1400px; /* 👈 LARGO */
+}
+
+/* Paredes */
+.wall {
+  position: absolute;
+  background: #2b2b2b;
+}
+
+/* Personaje */
+.player {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  background: url("https://cdna.artstation.com/p/assets/images/images/047/256/128/original/benjamin-parga-oso-3-4-45ms.gif?1647163873") center/contain no-repeat;
+  top: 10px;
+  left: 10px;
+}
+
+/* Meta */
+.goal {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: url("https://i.pinimg.com/originals/4e/c5/7f/4ec57f0a9c32b5cc3d539a7a20e29304.gif") center/contain no-repeat;
+  bottom: 20px;
+  left: 160px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+  <div class="maze" id="maze">
+
+    <!-- PERSONAJE -->
+    <div class="player" id="player"></div>
+
+    <!-- META -->
+    <div class="goal" id="goal"></div>
+
+    <!-- PAREDES (LABERINTO LARGO) -->
+    <div class="wall" style="top:60px; left:0; width:300px; height:20px;"></div>
+    <div class="wall" style="top:120px; left:60px; width:300px; height:20px;"></div>
+    <div class="wall" style="top:180px; left:0; width:280px; height:20px;"></div>
+    <div class="wall" style="top:240px; left:80px; width:280px; height:20px;"></div>
+    <div class="wall" style="top:300px; left:0; width:300px; height:20px;"></div>
+
+    <div class="wall" style="top:400px; left:60px; width:300px; height:20px;"></div>
+    <div class="wall" style="top:460px; left:0; width:280px; height:20px;"></div>
+    <div class="wall" style="top:520px; left:80px; width:280px; height:20px;"></div>
+    <div class="wall" style="top:580px; left:0; width:300px; height:20px;"></div>
+
+    <div class="wall" style="top:700px; left:60px; width:300px; height:20px;"></div>
+    <div class="wall" style="top:760px; left:0; width:280px; height:20px;"></div>
+    <div class="wall" style="top:820px; left:80px; width:280px; height:20px;"></div>
+    <div class="wall" style="top:880px; left:0; width:300px; height:20px;"></div>
+
+    <div class="wall" style="top:1000px; left:60px; width:300px; height:20px;"></div>
+    <div class="wall" style="top:1060px; left:0; width:280px; height:20px;"></div>
+    <div class="wall" style="top:1120px; left:80px; width:280px; height:20px;"></div>
+    <div class="wall" style="top:1180px; left:0; width:300px; height:20px;"></div>
+
+  </div>
+</div>
+
+<script>
+const player = document.getElementById("player");
+const maze = document.getElementById("maze");
+const goal = document.getElementById("goal");
+const walls = document.querySelectorAll(".wall");
+
+let x = 10;
+let y = 10;
+let speed = 8;
+
+/* Movimiento teclado */
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowUp") y -= speed;
+  if (e.key === "ArrowDown") y += speed;
+  if (e.key === "ArrowLeft") x -= speed;
+  if (e.key === "ArrowRight") x += speed;
+  move();
+});
+
+/* Movimiento táctil */
+document.addEventListener("touchmove", e => {
+  const touch = e.touches[0];
+  x = touch.clientX - 180;
+  y = touch.clientY - 30;
+  move();
+});
+
+/* Movimiento + colisiones */
+function move() {
+  player.style.left = x + "px";
+  player.style.top = y + "px";
+
+  maze.style.top = Math.min(0, -y + 300) + "px";
+
+  const p = player.getBoundingClientRect();
+
+  for (let wall of walls) {
+    const w = wall.getBoundingClientRect();
+    if (
+      p.left < w.right &&
+      p.right > w.left &&
+      p.top < w.bottom &&
+      p.bottom > w.top
+    ) {
+      lose();
+    }
+  }
+
+  const g = goal.getBoundingClientRect();
+  if (
+    p.left < g.right &&
+    p.right > g.left &&
+    p.top < g.bottom &&
+    p.bottom > g.top
+  ) {
+    win();
+  }
+}
+
+/* Perder */
+function lose() {
+  alert("💥 Tocaste una pared. Inténtalo de nuevo");
+  location.reload();
+}
+
+/* Ganar */
+function win() {
+  localStorage.setItem("juego5", "desbloqueado");
+  alert("🏆 ¡Laberinto completado!");
+  location.href = "mapa.html";
+}
+</script>
+
+</body>
+</html>

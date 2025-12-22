@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego</title>
+
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  background-color: red;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: white;
+  overflow: hidden;
+}
+
+img {
+  width: 220px;
+  margin-bottom: 20px;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+button {
+  padding: 15px 30px;
+  font-size: 18px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+#yes {
+  background: white;
+  color: red;
+}
+
+#no {
+  background: black;
+  color: white;
+}
+</style>
+</head>
+
+<body>
+
+<div>
+  <img src="https://i.pinimg.com/originals/fa/e6/95/fae695d4556f98aca6709361dcce9273.gif">
+  <h2>¿Quieres jugar un juego conmigo ELLIAN?</h2>
+
+  <div class="buttons">
+    <button id="yes">Sí</button>
+    <button id="no">No</button>
+  </div>
+</div>
+
+<script>
+const yes = document.getElementById("yes");
+const no = document.getElementById("no");
+
+let size = 1;
+let index = 0;
+
+const frases = [
+  "¿Estás segura?",
+  "¿De verdad no?",
+  "Piénsalo bien...",
+  "Vamos 😢",
+  "Di que sí 💖"
+];
+
+no.addEventListener("click", () => {
+  size += 0.15;
+  yes.style.transform = `scale(${size})`;
+  yes.textContent = frases[index % frases.length];
+  index++;
+});
+
+yes.addEventListener("click", () => {
+  window.location.href = "mapa.html";
+});
+</script>
+
+</body>
+</html>

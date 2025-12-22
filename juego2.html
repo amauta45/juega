@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego 2 - Memoriza</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #6a0000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+.container {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  padding: 10px;
+}
+
+h1 {
+  margin-bottom: 8px;
+}
+
+#timer {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+/* Tablero 4x4 */
+.board {
+  width: 320px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+/* Carta */
+.card {
+  width: 70px;
+  height: 70px;
+  background: #111;
+  border-radius: 10px;
+  cursor: pointer;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.4s;
+}
+
+.card.flip {
+  transform: rotateY(180deg);
+}
+
+/* Cara frontal */
+.front, .back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 10px;
+}
+
+/* Frente (tapada) */
+.front {
+  background: gold;
+}
+
+/* Dorso (imagen) */
+.back {
+  transform: rotateY(180deg);
+  background-size: cover;
+  background-position: center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>🧠 Memorizando el Tesoro</h1>
+  <div id="timer">Tiempo: 90</div>
+
+  <div class="board" id="board"></div>
+</div>
+
+<script>
+const board = document.getElementById("board");
+let time = 90;
+let timer;
+let firstCard = null;
+let lock = false;
+let matches = 0;
+
+/* 🔹 IMÁGENES (8 pares = 16 cartas) */
+const images = [
+  "https://seriemaniac.com/wp-content/uploads/2025/04/Si-la-vida-te-da-mandarinas-serie-corena-netflix.webp",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQA2yqkF7qZ44vYGp9QdAVuGvq87L3NBaRnwQ&s",
+  "https://m.media-amazon.com/images/M/MV5BMTJiZmEwMWEtOWFlYi00YjEyLWEwY2EtMDM4YzIyNjY5ZDQ2XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
+  "https://play-lh.googleusercontent.com/proxy/qNziNiNayO1YeSk-SaEBv4kNSQ_RJ6CABUH6mGgCbNBPaGI2ryBywOglKBcV-_Iyo7wqrUI_56_uyUzAVo9DEheVYPo66yPf9VVJlTBfg_yPWwpmvNrj6vlCFc81WcnhLFMbwXc1HWqWNPPqY8n9UlaTNjwgRtqmCoj9hQ",
+  "https://i.pinimg.com/236x/6a/6b/bf/6a6bbfba21366f9ae65bad61d5c637b6.jpg",
+  "https://i.pinimg.com/736x/ff/34/82/ff3482f678881c4510e1528335f662e1.jpg",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4r_3F4fzt8SYcNZfefPZX9dqOGniche4SpA&s",
+  "https://i.pinimg.com/736x/4d/9e/93/4d9e933b450fb347ae05848d2b5e56f9.jpg"
+];
+
+/* Duplicar y mezclar */
+let cards = [...images, ...images].sort(() => Math.random() - 0.5);
+
+/* Crear cartas */
+cards.forEach(img => {
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const front = document.createElement("div");
+  front.className = "front";
+
+  const back = document.createElement("div");
+  back.className = "back";
+  back.style.backgroundImage = `url(${img})`;
+
+  card.appendChild(front);
+  card.appendChild(back);
+  board.appendChild(card);
+
+  card.addEventListener("click", () => flip(card, img));
+});
+
+/* Voltear carta */
+function flip(card, img) {
+  if (lock || card.classList.contains("flip")) return;
+
+  card.classList.add("flip");
+
+  if (!firstCard) {
+    firstCard = { card, img };
+    return;
+  }
+
+  lock = true;
+
+  if (firstCard.img === img) {
+    matches++;
+    firstCard = null;
+    lock = false;
+
+    if (matches === 8) win();
+  } else {
+    setTimeout(() => {
+      card.classList.remove("flip");
+      firstCard.card.classList.remove("flip");
+      firstCard = null;
+      lock = false;
+    }, 800);
+  }
+}
+
+/* Temporizador */
+timer = setInterval(() => {
+  time--;
+  document.getElementById("timer").textContent = "Tiempo: " + time;
+
+  if (time <= 0) {
+    clearInterval(timer);
+    alert("⏰ Tiempo agotado. El juego se reiniciará");
+    location.reload();
+  }
+}, 1000);
+
+/* Ganar */
+function win() {
+  clearInterval(timer);
+  setTimeout(() => {
+    alert("🎉 ¡Memoria completada!");
+    location.href = "mapa.html";
+  }, 500);
+}
+</script>
+
+</body>
+</html>

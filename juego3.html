@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego 3 - Atrapa los Corazones</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+/* Fondo */
+.game {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: url("https://i.pinimg.com/736x/70/6c/b0/706cb09844b2feef811a9fc584bf3719.jpg") center/cover no-repeat;
+}
+
+/* Nave */
+.player {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  transform: translateX(-50%);
+  background: url("https://i.gifer.com/origin/d6/d66ffd1987d422d9b3db13cebcb87947_w200.gif") center/contain no-repeat;
+}
+
+/* Corazones */
+.heart {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: url("https://cdn-icons-png.flaticon.com/512/833/833472.png") center/contain no-repeat;
+}
+
+/* Piedras */
+.rock {
+  position: absolute;
+  width: 45px;
+  height: 45px;
+  background: url("https://png.pngtree.com/png-clipart/20210108/ourmid/pngtree-monochrome-rock-clip-art-png-image_2689540.jpg") center/contain no-repeat;
+}
+
+/* Barra GRANDE */
+.bar {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;          /* ⬅ MÁS GRANDE */
+  height: 26px;          /* ⬅ MÁS ALTA */
+  border: 3px solid white;
+  border-radius: 15px;
+  background: rgba(0,0,0,0.4);
+}
+
+.fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(to right, pink, hotpink);
+  border-radius: 15px;
+  transition: width 0.2s;
+}
+</style>
+</head>
+
+<body>
+
+<div class="game" id="game">
+  <div class="bar"><div class="fill" id="fill"></div></div>
+  <div class="player" id="player"></div>
+</div>
+
+<script>
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const fill = document.getElementById("fill");
+
+let playerX = window.innerWidth / 2;
+let progress = 0;
+let speed = 5;
+let gameOver = false;
+
+/* Movimiento PC */
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") playerX -= 30;
+  if (e.key === "ArrowRight") playerX += 30;
+  movePlayer();
+});
+
+/* Movimiento celular */
+game.addEventListener("touchmove", e => {
+  playerX = e.touches[0].clientX;
+  movePlayer();
+});
+
+function movePlayer() {
+  playerX = Math.max(0, Math.min(window.innerWidth - 60, playerX));
+  player.style.left = playerX + "px";
+}
+
+/* Crear objetos */
+function spawn(type) {
+  const el = document.createElement("div");
+  el.className = type;
+  el.style.left = Math.random() * (window.innerWidth - 50) + "px";
+  el.style.top = "-50px";
+  game.appendChild(el);
+
+  let fall = setInterval(() => {
+    if (gameOver) {
+      clearInterval(fall);
+      el.remove();
+      return;
+    }
+
+    el.style.top = el.offsetTop + speed + "px";
+
+    const p = player.getBoundingClientRect();
+    const o = el.getBoundingClientRect();
+
+    if (
+      p.left < o.right &&
+      p.right > o.left &&
+      p.top < o.bottom &&
+      p.bottom > o.top
+    ) {
+      if (type === "heart") {
+        progress += 5;          // ⬅ MÁS CORAZONES NECESARIOS
+        fill.style.width = progress + "%";
+        el.remove();
+        clearInterval(fall);
+
+        if (progress >= 100) win();
+      } else {
+        lose();
+      }
+    }
+
+    if (el.offsetTop > window.innerHeight) {
+      el.remove();
+      clearInterval(fall);
+    }
+  }, 20);
+}
+
+/* Generadores */
+setInterval(() => spawn("heart"), 850);
+setInterval(() => spawn("rock"), 650);
+
+/* Perder */
+function lose() {
+  gameOver = true;
+  alert("💔 Tocaste una piedra. Inténtalo otra vez");
+  location.reload();
+}
+
+/* Ganar */
+function win() {
+  gameOver = true;
+
+  // 🔓 DESBLOQUEAR JUEGO 4
+  localStorage.setItem("juego4", "desbloqueado");
+
+  alert("❤️ ¡Nivel completado! Juego 4 desbloqueado");
+  location.href = "mapa.html";
+}
+</script>
+
+</body>
+</html>
