@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Juego 1 - Rompecabezas</title>
+<title>Rompecabezas Móvil</title>
 
 <style>
 * {
@@ -39,7 +39,7 @@ h1 {
   display: none;
 }
 
-/* Selector de imágenes */
+/* Selector */
 .preview {
   display: flex;
   gap: 12px;
@@ -50,7 +50,6 @@ h1 {
 .preview img {
   width: 80px;
   height: 80px;
-  object-fit: cover;
   border-radius: 10px;
   border: 3px solid transparent;
   cursor: pointer;
@@ -67,7 +66,6 @@ h1 {
   margin: 10px auto;
   display: none;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
   gap: 3px;
   background: white;
   padding: 3px;
@@ -92,21 +90,23 @@ h1 {
   width: 96px;
   height: 96px;
   border-radius: 6px;
-  cursor: grab;
   background-size: 300px 300px;
+  cursor: pointer;
 }
 
-/* Botones */
+.piece.selected {
+  outline: 3px solid yellow;
+}
+
+/* Botón */
 button {
   padding: 10px 20px;
   font-size: 16px;
   border-radius: 10px;
   border: none;
   cursor: pointer;
-  margin-top: 10px;
 }
 
-/* Éxito */
 .success {
   display: none;
 }
@@ -116,34 +116,29 @@ button {
 <body>
 
 <div class="container">
-  <h1>🧩 Elige tu rompecabezas</h1>
+  <h1>🧩 Rompecabezas</h1>
 
-  <!-- Selección de imágenes -->
-  <div class="preview" id="preview">
+  <div class="preview">
     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeXE52b-h5WItJimoqoUcTrqMdZ7bfJELhxkrd6jSN1w&s" onclick="selectImage(this)">
     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_zDbG5UNVz8OgRTsX85zy4uDoT-o8AFDZ5A&s" onclick="selectImage(this)">
     <img src="https://wallpapers.com/images/hd/bts-chibi-pile-m10g2dljpk050xse.jpg" onclick="selectImage(this)">
   </div>
 
-  <button onclick="startGame()">Empezar juego</button>
+  <button onclick="startGame()">Empezar</button>
 
   <div id="timer">Tiempo: 60</div>
-
-  <!-- Tablero -->
   <div class="board" id="board"></div>
-
-  <!-- Piezas -->
   <div class="pieces" id="pieces"></div>
 
-  <!-- Éxito -->
   <div class="success" id="success">
-    <h2>🎉 ¡Rompecabezas completado!</h2>
-    <button onclick="location.href='mapa.html'">Volver al mapa</button>
+    <h2>🎉 ¡Completado!</h2>
+    <button onclick="location.href='mapa.html'">Volver</button>
   </div>
 </div>
 
 <script>
 let selectedImage = "";
+let selectedPiece = null;
 let correct = 0;
 let time = 60;
 let timer;
@@ -155,16 +150,15 @@ function selectImage(img) {
   selectedImage = img.src;
 }
 
-/* Iniciar juego */
+/* Iniciar */
 function startGame() {
   if (!selectedImage) {
-    alert("Selecciona una imagen primero");
+    alert("Selecciona una imagen");
     return;
   }
 
   document.querySelector(".preview").style.display = "none";
   document.querySelector("button").style.display = "none";
-
   document.getElementById("timer").style.display = "block";
   document.getElementById("board").style.display = "grid";
   document.getElementById("pieces").style.display = "grid";
@@ -174,7 +168,7 @@ function startGame() {
   startTimer();
 }
 
-/* Crear tablero */
+/* Tablero */
 function createBoard() {
   const board = document.getElementById("board");
   board.innerHTML = "";
@@ -184,22 +178,33 @@ function createBoard() {
     const cell = document.createElement("div");
     cell.className = "cell";
     cell.dataset.index = i;
-    cell.addEventListener("dragover", e => e.preventDefault());
-    cell.addEventListener("drop", drop);
+
+    cell.onclick = () => {
+      if (selectedPiece && selectedPiece.dataset.index === cell.dataset.index && cell.children.length === 0) {
+        cell.appendChild(selectedPiece);
+        selectedPiece.classList.remove("selected");
+        selectedPiece.style.width = "100%";
+        selectedPiece.style.height = "100%";
+        selectedPiece = null;
+        correct++;
+
+        if (correct === 9) win();
+      }
+    };
+
     board.appendChild(cell);
   }
 }
 
-/* Crear piezas */
+/* Piezas */
 function createPieces() {
-  const piecesContainer = document.getElementById("pieces");
-  piecesContainer.innerHTML = "";
+  const container = document.getElementById("pieces");
+  container.innerHTML = "";
   let pieces = [];
 
   for (let i = 0; i < 9; i++) {
     const piece = document.createElement("div");
     piece.className = "piece";
-    piece.draggable = true;
     piece.dataset.index = i;
     piece.style.backgroundImage = `url(${selectedImage})`;
 
@@ -207,33 +212,20 @@ function createPieces() {
     const y = Math.floor(i / 3) * -100;
     piece.style.backgroundPosition = `${x}px ${y}px`;
 
-    piece.addEventListener("dragstart", drag);
+    piece.onclick = () => {
+      document.querySelectorAll(".piece").forEach(p => p.classList.remove("selected"));
+      piece.classList.add("selected");
+      selectedPiece = piece;
+    };
+
     pieces.push(piece);
   }
 
   pieces.sort(() => Math.random() - 0.5);
-  pieces.forEach(p => piecesContainer.appendChild(p));
+  pieces.forEach(p => container.appendChild(p));
 }
 
-function drag(e) {
-  e.dataTransfer.setData("index", e.target.dataset.index);
-}
-
-function drop(e) {
-  const pieceIndex = e.dataTransfer.getData("index");
-  if (pieceIndex === e.target.dataset.index && e.target.children.length === 0) {
-    const piece = document.querySelector(`.piece[data-index="${pieceIndex}"]`);
-    e.target.appendChild(piece);
-    piece.draggable = false;
-    piece.style.width = "100%";
-    piece.style.height = "100%";
-    correct++;
-
-    if (correct === 9) win();
-  }
-}
-
-/* Temporizador */
+/* Tiempo */
 function startTimer() {
   timer = setInterval(() => {
     time--;
@@ -241,7 +233,7 @@ function startTimer() {
 
     if (time <= 0) {
       clearInterval(timer);
-      alert("⏰ Tiempo agotado. El juego se reiniciará");
+      alert("⏰ Tiempo agotado");
       location.reload();
     }
   }, 1000);
@@ -258,3 +250,5 @@ function win() {
 
 </body>
 </html>
+
+
