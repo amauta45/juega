@@ -22,13 +22,14 @@ body {
   background: url("https://i.pinimg.com/1200x/0c/8a/01/0c8a01297970f5d6efb7cbb5b280d246.jpg") center/cover no-repeat;
 }
 
-/* BARRA DE PROGRESO */
+/* BARRA */
 .progress {
   position: absolute;
-  top: 10px;
+  top: 2vh;
   left: 50%;
   transform: translateX(-50%);
-  width: 340px;
+  width: 80vw;
+  max-width: 340px;
   height: 22px;
   border: 2px solid white;
   border-radius: 12px;
@@ -41,44 +42,49 @@ body {
   width: 0%;
   background: linear-gradient(to right, pink, hotpink);
   border-radius: 10px;
-  transition: width 0.2s;
 }
 
 /* SUELO */
 .ground {
   position: absolute;
-  bottom: 80px;
+  bottom: 15vh;
   width: 100%;
-  height: 10px;
+  height: 8px;
   background: rgba(0,0,0,0.6);
 }
 
 /* PERSONAJE */
 .player {
   position: absolute;
-  bottom: 90px;
-  left: 80px;
-  width: 60px;
-  height: 60px;
+  bottom: 15vh;
+  left: 10vw;
+  width: 12vw;
+  max-width: 60px;
+  min-width: 45px;
+  aspect-ratio: 1;
   background: url("https://cdna.artstation.com/p/assets/images/images/047/256/128/original/benjamin-parga-oso-3-4-45ms.gif?1647163873") center/contain no-repeat;
 }
 
 /* OBSTÁCULOS */
 .obstacle {
   position: absolute;
-  bottom: 80px;
-  width: 40px;
-  height: 60px;
+  bottom: 15vh;
+  width: 8vw;
+  max-width: 40px;
+  min-width: 28px;
+  height: 8vw;
+  max-height: 45px;
   background: url("https://mcgamba.hotglue.me/?Page4.head.155907191411") center/contain no-repeat;
 }
 
 /* META */
 .goal {
   position: absolute;
-  bottom: 80px;
-  right: -15000px; /* ⏱️ ~5 MINUTOS */
-  width: 90px;
-  height: 90px;
+  bottom: 15vh;
+  right: -9000px; /* ⏱️ 3 minutos */
+  width: 14vw;
+  max-width: 90px;
+  aspect-ratio: 1;
   background: url("https://cdn-icons-png.flaticon.com/512/854/854878.png") center/contain no-repeat;
 }
 </style>
@@ -99,16 +105,16 @@ const goal = document.getElementById("goal");
 const fill = document.getElementById("fill");
 const game = document.getElementById("game");
 
-let y = 0, velocity = 0, gravity = 1.2, jumping = false;
-let speed = 5;               // velocidad equilibrada
+let y = 0, velocity = 0, gravity = 1, jumping = false;
+let speed = 3;                // ⬅ MÁS LENTO (FÁCIL)
 let obstacles = [];
 let finished = false;
 
-/* DISTANCIA (5 MIN APROX) */
+/* 3 MINUTOS */
 let distance = 0;
-const maxDistance = 15000;
+const maxDistance = 9000;
 
-/* SALTAR */
+/* SALTO */
 document.addEventListener("keydown", e => {
   if (e.code === "Space") jump();
 });
@@ -116,12 +122,12 @@ document.addEventListener("touchstart", jump);
 
 function jump() {
   if (!jumping) {
-    velocity = 18;
+    velocity = 20;           // ⬅ SALTO MÁS ALTO
     jumping = true;
   }
 }
 
-/* OBSTÁCULOS */
+/* OBSTÁCULOS (MÁS LENTOS) */
 setInterval(() => {
   if (finished) return;
   const obs = document.createElement("div");
@@ -129,7 +135,7 @@ setInterval(() => {
   obs.style.left = "100%";
   game.appendChild(obs);
   obstacles.push(obs);
-}, 1300);
+}, 1800);
 
 /* LOOP */
 function update() {
@@ -142,7 +148,7 @@ function update() {
     y = 0;
     jumping = false;
   }
-  player.style.bottom = 90 + y + "px";
+  player.style.bottom = "calc(15vh + " + y + "px)";
 
   /* DISTANCIA */
   distance += speed;
@@ -161,7 +167,7 @@ function update() {
   });
 
   /* META */
-  if (collision(player, goal)) win();
+  if (distance >= maxDistance) win();
 
   requestAnimationFrame(update);
 }
@@ -180,9 +186,9 @@ function collision(a, b) {
   );
 }
 
-/* REINICIAR */
+/* REINICIO */
 function resetGame() {
-  alert("💥 Fallaste… vuelves al inicio");
+  alert("💥 Fallaste, inténtalo otra vez");
   distance = 0;
   fill.style.width = "0%";
   obstacles.forEach(o => o.remove());
@@ -192,7 +198,7 @@ function resetGame() {
 /* GANAR */
 function win() {
   finished = true;
-  alert("🎉 ¡LO LOGRASTE! Ahora recibirás tu recompensa 💖");
+  alert("🎉 ¡FELICIDADES! Completaste el juego 💖");
   location.href = "carta.html";
 }
 </script>
