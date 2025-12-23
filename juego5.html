@@ -19,17 +19,27 @@ body {
   position: relative;
   width: 100vw;
   height: 100vh;
-  background: url("https://i.pinimg.com/1200x/0c/8a/01/0c8a01297970f5d6efb7cbb5b280d246.jpg") center/cover no-repeat;
+  background: url("https://i.pinimg.com/1200x/0c/8a/01/0c8a01297970f5d6efb7cbb5b280d246.jpg")
+              center/cover no-repeat;
+}
+
+/* VIDAS */
+.lives {
+  position: absolute;
+  top: 45px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  z-index: 10;
 }
 
 /* BARRA */
 .progress {
   position: absolute;
-  top: 2vh;
+  top: 10px;
   left: 50%;
   transform: translateX(-50%);
-  width: 80vw;
-  max-width: 340px;
+  width: 340px;
   height: 22px;
   border: 2px solid white;
   border-radius: 12px;
@@ -47,45 +57,31 @@ body {
 /* SUELO */
 .ground {
   position: absolute;
-  bottom: 15vh;
+  bottom: 80px;
   width: 100%;
-  height: 8px;
+  height: 10px;
   background: rgba(0,0,0,0.6);
 }
 
 /* PERSONAJE */
 .player {
   position: absolute;
-  bottom: 15vh;
-  left: 10vw;
-  width: 12vw;
-  max-width: 60px;
-  min-width: 45px;
-  aspect-ratio: 1;
-  background: url("https://cdna.artstation.com/p/assets/images/images/047/256/128/original/benjamin-parga-oso-3-4-45ms.gif?1647163873") center/contain no-repeat;
+  bottom: 90px;
+  left: 80px;
+  width: 60px;
+  height: 60px;
+  background: url("https://cdna.artstation.com/p/assets/images/images/047/256/128/original/benjamin-parga-oso-3-4-45ms.gif?1647163873")
+              center/contain no-repeat;
 }
 
 /* OBSTÁCULOS */
 .obstacle {
   position: absolute;
-  bottom: 15vh;
-  width: 8vw;
-  max-width: 40px;
-  min-width: 28px;
-  height: 8vw;
-  max-height: 45px;
-  background: url("https://mcgamba.hotglue.me/?Page4.head.155907191411") center/contain no-repeat;
-}
-
-/* META */
-.goal {
-  position: absolute;
-  bottom: 15vh;
-  right: -9000px; /* ⏱️ 3 minutos */
-  width: 14vw;
-  max-width: 90px;
-  aspect-ratio: 1;
-  background: url("https://cdn-icons-png.flaticon.com/512/854/854878.png") center/contain no-repeat;
+  bottom: 80px;
+  width: 40px;
+  height: 60px;
+  background: url("https://mcgamba.hotglue.me/?Page4.head.155907191411")
+              center/contain no-repeat;
 }
 </style>
 </head>
@@ -93,41 +89,53 @@ body {
 <body>
 
 <div class="game" id="game">
-  <div class="progress"><div class="fill" id="fill"></div></div>
+  <div class="progress">
+    <div class="fill" id="fill"></div>
+  </div>
+  <div class="lives" id="lives">❤️❤️</div>
   <div class="ground"></div>
   <div class="player" id="player"></div>
-  <div class="goal" id="goal"></div>
 </div>
 
 <script>
 const player = document.getElementById("player");
-const goal = document.getElementById("goal");
 const fill = document.getElementById("fill");
 const game = document.getElementById("game");
+const livesUI = document.getElementById("lives");
 
-let y = 0, velocity = 0, gravity = 1, jumping = false;
-let speed = 3;                // ⬅ MÁS LENTO (FÁCIL)
+/* FÍSICA */
+let y = 0;
+let velocity = 0;
+let gravity = 0.8;
+let jumpForce = 15;
+let jumping = false;
+
+/* JUEGO */
+let speed = 4;
 let obstacles = [];
 let finished = false;
 
-/* 3 MINUTOS */
-let distance = 0;
-const maxDistance = 9000;
+/* VIDAS */
+let lives = 2;
 
-/* SALTO */
+/* PROGRESO */
+let distance = 0;
+const maxDistance = 5500; 
+
+/* SALTAR */
 document.addEventListener("keydown", e => {
   if (e.code === "Space") jump();
 });
 document.addEventListener("touchstart", jump);
 
 function jump() {
-  if (!jumping) {
-    velocity = 20;           // ⬅ SALTO MÁS ALTO
+  if (!jumping && !finished) {
+    velocity = jumpForce;
     jumping = true;
   }
 }
 
-/* OBSTÁCULOS (MÁS LENTOS) */
+/* CREAR OBSTÁCULOS */
 setInterval(() => {
   if (finished) return;
   const obs = document.createElement("div");
@@ -135,9 +143,9 @@ setInterval(() => {
   obs.style.left = "100%";
   game.appendChild(obs);
   obstacles.push(obs);
-}, 1800);
+}, 1600);
 
-/* LOOP */
+/* LOOP PRINCIPAL */
 function update() {
   if (finished) return;
 
@@ -148,11 +156,18 @@ function update() {
     y = 0;
     jumping = false;
   }
-  player.style.bottom = "calc(15vh + " + y + "px)";
+  player.style.bottom = 90 + y + "px";
 
-  /* DISTANCIA */
+  /* PROGRESO */
   distance += speed;
-  fill.style.width = Math.min((distance / maxDistance) * 100, 100) + "%";
+  let progress = (distance / maxDistance) * 100;
+  fill.style.width = Math.min(progress, 100) + "%";
+
+  /* FINAL POR BARRA */
+  if (progress >= 100) {
+    win();
+    return;
+  }
 
   /* OBSTÁCULOS */
   obstacles.forEach((obs, i) => {
@@ -163,32 +178,43 @@ function update() {
       obstacles.splice(i, 1);
     }
 
-    if (collision(player, obs)) resetGame();
+    if (collision(player, obs)) hit(obs);
   });
-
-  /* META */
-  if (distance >= maxDistance) win();
 
   requestAnimationFrame(update);
 }
 
 update();
 
-/* COLISIÓN */
+/* COLISIÓN JUSTA */
 function collision(a, b) {
   const r1 = a.getBoundingClientRect();
   const r2 = b.getBoundingClientRect();
   return (
-    r1.left < r2.right &&
-    r1.right > r2.left &&
-    r1.top < r2.bottom &&
-    r1.bottom > r2.top
+    r1.left + 10 < r2.right - 10 &&
+    r1.right - 10 > r2.left + 10 &&
+    r1.top + 10 < r2.bottom - 10 &&
+    r1.bottom - 10 > r2.top + 10
   );
 }
 
-/* REINICIO */
+/* GOLPE */
+function hit(obs) {
+  obs.remove();
+  obstacles = obstacles.filter(o => o !== obs);
+  lives--;
+  livesUI.textContent = "❤️".repeat(lives);
+
+  if (lives <= 0) {
+    alert("💥 Sin vidas… vuelves al inicio");
+    resetGame();
+  }
+}
+
+/* REINICIAR */
 function resetGame() {
-  alert("💥 Fallaste, inténtalo otra vez");
+  lives = 2;
+  livesUI.textContent = "❤️❤️";
   distance = 0;
   fill.style.width = "0%";
   obstacles.forEach(o => o.remove());
@@ -198,10 +224,12 @@ function resetGame() {
 /* GANAR */
 function win() {
   finished = true;
-  alert("🎉 ¡FELICIDADES! Completaste el juego 💖");
+  alert("🎉 ¡LO LOGRASTE! Ahora recibirás tu recompensa 💖");
   location.href = "carta.html";
 }
 </script>
 
 </body>
 </html>
+
+
