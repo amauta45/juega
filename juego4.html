@@ -17,9 +17,9 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
+  touch-action: none;
 }
 
-/* Área visible */
 .game {
   width: 360px;
   height: 600px;
@@ -29,30 +29,27 @@ body {
   position: relative;
 }
 
-/* Laberinto largo */
 .maze {
   position: absolute;
   width: 360px;
-  height: 1400px; /* 👈 LARGO */
+  height: 1400px;
 }
 
-/* Paredes */
 .wall {
   position: absolute;
   background: #2b2b2b;
+  border-radius: 6px;
 }
 
-/* Personaje */
 .player {
   position: absolute;
   width: 32px;
   height: 32px;
   background: url("https://cdna.artstation.com/p/assets/images/images/047/256/128/original/benjamin-parga-oso-3-4-45ms.gif?1647163873") center/contain no-repeat;
-  top: 10px;
   left: 10px;
+  top: 10px;
 }
 
-/* Meta */
 .goal {
   position: absolute;
   width: 40px;
@@ -69,13 +66,10 @@ body {
 <div class="game">
   <div class="maze" id="maze">
 
-    <!-- PERSONAJE -->
     <div class="player" id="player"></div>
-
-    <!-- META -->
     <div class="goal" id="goal"></div>
 
-    <!-- PAREDES (LABERINTO LARGO) -->
+    <!-- PAREDES -->
     <div class="wall" style="top:60px; left:0; width:300px; height:20px;"></div>
     <div class="wall" style="top:120px; left:60px; width:300px; height:20px;"></div>
     <div class="wall" style="top:180px; left:0; width:280px; height:20px;"></div>
@@ -108,69 +102,67 @@ const walls = document.querySelectorAll(".wall");
 
 let x = 10;
 let y = 10;
-let speed = 8;
+let speed = 4;
+let dx = 0;
+let dy = 0;
 
-/* Movimiento teclado */
+/* TECLADO */
 document.addEventListener("keydown", e => {
-  if (e.key === "ArrowUp") y -= speed;
-  if (e.key === "ArrowDown") y += speed;
-  if (e.key === "ArrowLeft") x -= speed;
-  if (e.key === "ArrowRight") x += speed;
-  move();
+  if (e.key === "ArrowUp") dy = -1;
+  if (e.key === "ArrowDown") dy = 1;
+  if (e.key === "ArrowLeft") dx = -1;
+  if (e.key === "ArrowRight") dx = 1;
 });
 
-/* Movimiento táctil */
+document.addEventListener("keyup", () => {
+  dx = 0;
+  dy = 0;
+});
+
+/* TOUCH JOYSTICK */
 document.addEventListener("touchmove", e => {
-  const touch = e.touches[0];
-  x = touch.clientX - 180;
-  y = touch.clientY - 30;
-  move();
+  const t = e.touches[0];
+  dx = (t.clientX - window.innerWidth / 2) / 100;
+  dy = (t.clientY - window.innerHeight / 2) / 100;
 });
 
-/* Movimiento + colisiones */
-function move() {
+/* LOOP */
+function update() {
+  x += dx * speed;
+  y += dy * speed;
+
+  x = Math.max(0, Math.min(328, x));
+  y = Math.max(0, Math.min(1360, y));
+
   player.style.left = x + "px";
   player.style.top = y + "px";
 
-  maze.style.top = Math.min(0, -y + 300) + "px";
+  maze.style.top = Math.min(0, 250 - y) + "px";
 
+  checkCollisions();
+  requestAnimationFrame(update);
+}
+
+function checkCollisions() {
   const p = player.getBoundingClientRect();
 
   for (let wall of walls) {
     const w = wall.getBoundingClientRect();
-    if (
-      p.left < w.right &&
-      p.right > w.left &&
-      p.top < w.bottom &&
-      p.bottom > w.top
-    ) {
-      lose();
+    if (p.left < w.right && p.right > w.left && p.top < w.bottom && p.bottom > w.top) {
+      alert("💥 Tocaste una pared");
+      location.reload();
     }
   }
 
   const g = goal.getBoundingClientRect();
-  if (
-    p.left < g.right &&
-    p.right > g.left &&
-    p.top < g.bottom &&
-    p.bottom > g.top
-  ) {
-    win();
+  if (p.left < g.right && p.right > g.left && p.top < g.bottom && p.bottom > g.top) {
+    localStorage.setItem("juego5", "desbloqueado");
+    alert("🏆 ¡Laberinto completado!");
+    location.href = "mapa.html";
   }
 }
 
-/* Perder */
-function lose() {
-  alert("💥 Tocaste una pared. Inténtalo de nuevo");
-  location.reload();
-}
-
-/* Ganar */
-function win() {
-  localStorage.setItem("juego5", "desbloqueado");
-  alert("🏆 ¡Laberinto completado!");
-  location.href = "mapa.html";
-}
+update();
 </script>
 
 </body>
