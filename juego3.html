@@ -25,13 +25,13 @@ body {
               center/cover no-repeat;
 }
 
-/* PERSONAJE MÁS GRANDE */
+/* PERSONAJE (MÁS ARRIBA) */
 .player {
   position: absolute;
-  bottom: 15px;
-  left: 50%;
-  width: 80px;
-  height: 80px;
+  bottom: 35%; /* ← AQUÍ SE SUBE EL PERSONAJE */
+  left: 70%;
+  width: 90px;
+  height: 50px;
   transform: translateX(-50%);
   background: url("https://i.gifer.com/origin/d6/d66ffd1987d422d9b3db13cebcb87947_w200.gif")
               center/contain no-repeat;
@@ -116,7 +116,7 @@ document.addEventListener("keydown", e => {
   movePlayer();
 });
 
-/* MOVIMIENTO CELULAR (SUAVE) */
+/* MOVIMIENTO CELULAR */
 game.addEventListener("touchmove", e => {
   e.preventDefault();
   playerX = e.touches[0].clientX - player.offsetWidth / 2;
@@ -196,5 +196,6 @@ function win() {
 
 </body>
 </html>
+
 
 
