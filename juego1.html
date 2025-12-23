@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Juego 1 - Rompecabezas</title>
+<title>Rompecabezas</title>
 
 <style>
 * {
@@ -14,7 +14,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(#b30000, #7a0000);
+  background: #b30000;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -28,34 +28,6 @@ body {
   padding: 10px;
 }
 
-h1 {
-  margin-bottom: 10px;
-}
-
-/* TIEMPO Y PROGRESO */
-#timer {
-  font-size: 18px;
-  margin-bottom: 6px;
-  display: none;
-}
-
-.progress {
-  width: 100%;
-  height: 14px;
-  background: rgba(255,255,255,0.3);
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 10px;
-  display: none;
-}
-
-.fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(to right, #ffb3c6, hotpink);
-}
-
-/* SELECTOR */
 .preview {
   display: flex;
   gap: 12px;
@@ -76,25 +48,31 @@ h1 {
   border-color: yellow;
 }
 
-/* TABLERO */
+#timer {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  display: none;
+}
+
 .board {
   width: 300px;
   height: 300px;
   margin: 10px auto;
   display: none;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  grid-template-rows: repeat(3, 1fr);
+  gap: 3px;
   background: white;
-  padding: 4px;
-  border-radius: 12px;
+  padding: 3px;
+  border-radius: 10px;
 }
 
 .cell {
-  background: #ddd;
+  background: #eee;
   border-radius: 6px;
 }
 
-/* PIEZAS */
 .pieces {
   width: 300px;
   margin: 10px auto;
@@ -107,26 +85,14 @@ h1 {
   width: 96px;
   height: 96px;
   border-radius: 6px;
-  cursor: grab;
-  background-size: 300px 300px;
-  transition: transform 0.2s;
-}
-
-.piece:active {
-  transform: scale(0.95);
-}
-
-/* BOTONES */
-button {
-  padding: 10px 20px;
-  font-size: 16px;
-  border-radius: 10px;
-  border: none;
   cursor: pointer;
-  margin-top: 8px;
+  background-size: 300px 300px;
 }
 
-/* GANAR */
+.piece.selected {
+  outline: 3px solid yellow;
+}
+
 .success {
   display: none;
 }
@@ -147,32 +113,29 @@ button {
   <button onclick="startGame()">Empezar juego</button>
 
   <div id="timer">Tiempo: 60</div>
-  <div class="progress"><div class="fill" id="fill"></div></div>
 
   <div class="board" id="board"></div>
   <div class="pieces" id="pieces"></div>
 
   <div class="success" id="success">
     <h2>🎉 ¡Rompecabezas completado!</h2>
-    <button onclick="location.href='mapa.html'">Volver al mapa</button>
-    <button onclick="location.reload()">Reintentar</button>
+    <button onclick="location.reload()">Jugar otra vez</button>
   </div>
 </div>
 
 <script>
 let selectedImage = "";
+let selectedPiece = null;
 let correct = 0;
 let time = 60;
 let timer;
 
-/* SELECCIONAR */
 function selectImage(img) {
   document.querySelectorAll(".preview img").forEach(i => i.classList.remove("selected"));
   img.classList.add("selected");
   selectedImage = img.src;
 }
 
-/* INICIAR */
 function startGame() {
   if (!selectedImage) {
     alert("Selecciona una imagen primero");
@@ -183,7 +146,6 @@ function startGame() {
   document.querySelector("button").style.display = "none";
 
   document.getElementById("timer").style.display = "block";
-  document.querySelector(".progress").style.display = "block";
   document.getElementById("board").style.display = "grid";
   document.getElementById("pieces").style.display = "grid";
 
@@ -192,7 +154,6 @@ function startGame() {
   startTimer();
 }
 
-/* TABLERO */
 function createBoard() {
   const board = document.getElementById("board");
   board.innerHTML = "";
@@ -202,22 +163,38 @@ function createBoard() {
     const cell = document.createElement("div");
     cell.className = "cell";
     cell.dataset.index = i;
-    cell.ondragover = e => e.preventDefault();
-    cell.ondrop = drop;
+
+    cell.addEventListener("click", () => {
+      if (!selectedPiece) return;
+
+      if (
+        selectedPiece.dataset.index === cell.dataset.index &&
+        cell.children.length === 0
+      ) {
+        cell.appendChild(selectedPiece);
+        selectedPiece.style.width = "100%";
+        selectedPiece.style.height = "100%";
+        selectedPiece.classList.remove("selected");
+        selectedPiece = null;
+        correct++;
+
+        if (correct === 9) win();
+      }
+    });
+
     board.appendChild(cell);
   }
 }
 
-/* PIEZAS */
 function createPieces() {
-  const piecesContainer = document.getElementById("pieces");
-  piecesContainer.innerHTML = "";
+  const container = document.getElementById("pieces");
+  container.innerHTML = "";
+
   let pieces = [];
 
   for (let i = 0; i < 9; i++) {
     const piece = document.createElement("div");
     piece.className = "piece";
-    piece.draggable = true;
     piece.dataset.index = i;
     piece.style.backgroundImage = `url(${selectedImage})`;
 
@@ -225,39 +202,19 @@ function createPieces() {
     const y = Math.floor(i / 3) * -100;
     piece.style.backgroundPosition = `${x}px ${y}px`;
 
-    piece.ondragstart = drag;
+    piece.addEventListener("click", () => {
+      document.querySelectorAll(".piece").forEach(p => p.classList.remove("selected"));
+      piece.classList.add("selected");
+      selectedPiece = piece;
+    });
+
     pieces.push(piece);
   }
 
   pieces.sort(() => Math.random() - 0.5);
-  pieces.forEach(p => piecesContainer.appendChild(p));
+  pieces.forEach(p => container.appendChild(p));
 }
 
-function drag(e) {
-  e.dataTransfer.setData("index", e.target.dataset.index);
-}
-
-function drop(e) {
-  const pieceIndex = e.dataTransfer.getData("index");
-  if (pieceIndex === e.target.dataset.index && e.target.children.length === 0) {
-    const piece = document.querySelector(`.piece[data-index="${pieceIndex}"]`);
-    e.target.appendChild(piece);
-    piece.draggable = false;
-    piece.style.width = "100%";
-    piece.style.height = "100%";
-    correct++;
-    updateProgress();
-
-    if (correct === 9) win();
-  }
-}
-
-/* PROGRESO */
-function updateProgress() {
-  document.getElementById("fill").style.width = (correct / 9) * 100 + "%";
-}
-
-/* TIEMPO */
 function startTimer() {
   timer = setInterval(() => {
     time--;
@@ -271,19 +228,18 @@ function startTimer() {
   }, 1000);
 }
 
-/* GANAR */
 function win() {
   clearInterval(timer);
   document.getElementById("board").style.display = "none";
   document.getElementById("pieces").style.display = "none";
   document.getElementById("timer").style.display = "none";
-  document.querySelector(".progress").style.display = "none";
   document.getElementById("success").style.display = "block";
 }
 </script>
 
 </body>
 </html>
+
 
 
 
