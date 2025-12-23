@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rompecabezas Móvil</title>
+<title>Juego 1 - Rompecabezas</title>
 
 <style>
 * {
@@ -14,7 +14,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: #b30000;
+  background: linear-gradient(#b30000, #7a0000);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -32,14 +32,30 @@ h1 {
   margin-bottom: 10px;
 }
 
+/* TIEMPO Y PROGRESO */
 #timer {
-  font-size: 20px;
-  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 6px;
+  display: none;
+}
+
+.progress {
+  width: 100%;
+  height: 14px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 10px;
+  overflow: hidden;
   margin-bottom: 10px;
   display: none;
 }
 
-/* Selector */
+.fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(to right, #ffb3c6, hotpink);
+}
+
+/* SELECTOR */
 .preview {
   display: flex;
   gap: 12px;
@@ -50,6 +66,7 @@ h1 {
 .preview img {
   width: 80px;
   height: 80px;
+  object-fit: cover;
   border-radius: 10px;
   border: 3px solid transparent;
   cursor: pointer;
@@ -59,25 +76,25 @@ h1 {
   border-color: yellow;
 }
 
-/* Tablero */
+/* TABLERO */
 .board {
   width: 300px;
   height: 300px;
   margin: 10px auto;
   display: none;
   grid-template-columns: repeat(3, 1fr);
-  gap: 3px;
+  gap: 4px;
   background: white;
-  padding: 3px;
-  border-radius: 10px;
+  padding: 4px;
+  border-radius: 12px;
 }
 
 .cell {
-  background: #eee;
+  background: #ddd;
   border-radius: 6px;
 }
 
-/* Piezas */
+/* PIEZAS */
 .pieces {
   width: 300px;
   margin: 10px auto;
@@ -90,23 +107,26 @@ h1 {
   width: 96px;
   height: 96px;
   border-radius: 6px;
+  cursor: grab;
   background-size: 300px 300px;
-  cursor: pointer;
+  transition: transform 0.2s;
 }
 
-.piece.selected {
-  outline: 3px solid yellow;
+.piece:active {
+  transform: scale(0.95);
 }
 
-/* Botón */
+/* BOTONES */
 button {
   padding: 10px 20px;
   font-size: 16px;
   border-radius: 10px;
   border: none;
   cursor: pointer;
+  margin-top: 8px;
 }
 
+/* GANAR */
 .success {
   display: none;
 }
@@ -116,7 +136,7 @@ button {
 <body>
 
 <div class="container">
-  <h1>🧩 Rompecabezas</h1>
+  <h1>🧩 Elige tu rompecabezas</h1>
 
   <div class="preview">
     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeXE52b-h5WItJimoqoUcTrqMdZ7bfJELhxkrd6jSN1w&s" onclick="selectImage(this)">
@@ -124,42 +144,46 @@ button {
     <img src="https://wallpapers.com/images/hd/bts-chibi-pile-m10g2dljpk050xse.jpg" onclick="selectImage(this)">
   </div>
 
-  <button onclick="startGame()">Empezar</button>
+  <button onclick="startGame()">Empezar juego</button>
 
   <div id="timer">Tiempo: 60</div>
+  <div class="progress"><div class="fill" id="fill"></div></div>
+
   <div class="board" id="board"></div>
   <div class="pieces" id="pieces"></div>
 
   <div class="success" id="success">
-    <h2>🎉 ¡Completado!</h2>
-    <button onclick="location.href='mapa.html'">Volver</button>
+    <h2>🎉 ¡Rompecabezas completado!</h2>
+    <button onclick="location.href='mapa.html'">Volver al mapa</button>
+    <button onclick="location.reload()">Reintentar</button>
   </div>
 </div>
 
 <script>
 let selectedImage = "";
-let selectedPiece = null;
 let correct = 0;
 let time = 60;
 let timer;
 
-/* Seleccionar imagen */
+/* SELECCIONAR */
 function selectImage(img) {
   document.querySelectorAll(".preview img").forEach(i => i.classList.remove("selected"));
   img.classList.add("selected");
   selectedImage = img.src;
 }
 
-/* Iniciar */
+/* INICIAR */
 function startGame() {
   if (!selectedImage) {
-    alert("Selecciona una imagen");
+    alert("Selecciona una imagen primero");
     return;
   }
 
   document.querySelector(".preview").style.display = "none";
   document.querySelector("button").style.display = "none";
+
   document.getElementById("timer").style.display = "block";
+  document.querySelector(".progress").style.display = "block";
   document.getElementById("board").style.display = "grid";
   document.getElementById("pieces").style.display = "grid";
 
@@ -168,7 +192,7 @@ function startGame() {
   startTimer();
 }
 
-/* Tablero */
+/* TABLERO */
 function createBoard() {
   const board = document.getElementById("board");
   board.innerHTML = "";
@@ -178,33 +202,22 @@ function createBoard() {
     const cell = document.createElement("div");
     cell.className = "cell";
     cell.dataset.index = i;
-
-    cell.onclick = () => {
-      if (selectedPiece && selectedPiece.dataset.index === cell.dataset.index && cell.children.length === 0) {
-        cell.appendChild(selectedPiece);
-        selectedPiece.classList.remove("selected");
-        selectedPiece.style.width = "100%";
-        selectedPiece.style.height = "100%";
-        selectedPiece = null;
-        correct++;
-
-        if (correct === 9) win();
-      }
-    };
-
+    cell.ondragover = e => e.preventDefault();
+    cell.ondrop = drop;
     board.appendChild(cell);
   }
 }
 
-/* Piezas */
+/* PIEZAS */
 function createPieces() {
-  const container = document.getElementById("pieces");
-  container.innerHTML = "";
+  const piecesContainer = document.getElementById("pieces");
+  piecesContainer.innerHTML = "";
   let pieces = [];
 
   for (let i = 0; i < 9; i++) {
     const piece = document.createElement("div");
     piece.className = "piece";
+    piece.draggable = true;
     piece.dataset.index = i;
     piece.style.backgroundImage = `url(${selectedImage})`;
 
@@ -212,20 +225,39 @@ function createPieces() {
     const y = Math.floor(i / 3) * -100;
     piece.style.backgroundPosition = `${x}px ${y}px`;
 
-    piece.onclick = () => {
-      document.querySelectorAll(".piece").forEach(p => p.classList.remove("selected"));
-      piece.classList.add("selected");
-      selectedPiece = piece;
-    };
-
+    piece.ondragstart = drag;
     pieces.push(piece);
   }
 
   pieces.sort(() => Math.random() - 0.5);
-  pieces.forEach(p => container.appendChild(p));
+  pieces.forEach(p => piecesContainer.appendChild(p));
 }
 
-/* Tiempo */
+function drag(e) {
+  e.dataTransfer.setData("index", e.target.dataset.index);
+}
+
+function drop(e) {
+  const pieceIndex = e.dataTransfer.getData("index");
+  if (pieceIndex === e.target.dataset.index && e.target.children.length === 0) {
+    const piece = document.querySelector(`.piece[data-index="${pieceIndex}"]`);
+    e.target.appendChild(piece);
+    piece.draggable = false;
+    piece.style.width = "100%";
+    piece.style.height = "100%";
+    correct++;
+    updateProgress();
+
+    if (correct === 9) win();
+  }
+}
+
+/* PROGRESO */
+function updateProgress() {
+  document.getElementById("fill").style.width = (correct / 9) * 100 + "%";
+}
+
+/* TIEMPO */
 function startTimer() {
   timer = setInterval(() => {
     time--;
@@ -239,16 +271,19 @@ function startTimer() {
   }, 1000);
 }
 
+/* GANAR */
 function win() {
   clearInterval(timer);
   document.getElementById("board").style.display = "none";
   document.getElementById("pieces").style.display = "none";
   document.getElementById("timer").style.display = "none";
+  document.querySelector(".progress").style.display = "none";
   document.getElementById("success").style.display = "block";
 }
 </script>
 
 </body>
 </html>
+
 
 
